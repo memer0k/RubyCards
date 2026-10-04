@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.example.rubycards"
-    compileSdk = 34
+    compileSdk = 35 // Обновили версию компиляции до 35
 
     defaultConfig {
         applicationId = "com.example.rubycards"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35 // Обновили целевую версию до 35
         versionCode = 1
         versionName = "1.0"
 
@@ -40,7 +40,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -53,7 +52,6 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(libs.androidx.ui.test.manifest)
     debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
 }
