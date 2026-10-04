@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 import com.example.rubycards.ui.theme.RubyButton
 
 @Composable
-fun LoginScreen(onNavigateToRegister: () -> Unit) {
+fun LoginScreen(onNavigateToRegister: () -> Unit, onLoginSuccess: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -27,8 +27,8 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
         OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Пароль") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Используем нашу фирменную кнопку
-        RubyButton(text = "Войти", onClick = { /* TODO: Логика входа */ })
+        // Кнопка входа переключает экран на Main
+        RubyButton(text = "Войти", onClick = { onLoginSuccess() })
 
         TextButton(onClick = onNavigateToRegister) {
             Text("Нет аккаунта? Зарегистрироваться")

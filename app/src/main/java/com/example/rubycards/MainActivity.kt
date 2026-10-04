@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
 import com.example.rubycards.ui.auth.LoginScreen
 import com.example.rubycards.ui.auth.RegisterScreen
+import com.example.rubycards.ui.main.MainScreen
 import com.example.rubycards.ui.theme.RubyCardsTheme
 
 class MainActivity : ComponentActivity() {
@@ -19,11 +20,13 @@ class MainActivity : ComponentActivity() {
 
                 when (currentScreen) {
                     "login" -> LoginScreen(
-                        onNavigateToRegister = { currentScreen = "register" }
+                        onNavigateToRegister = { currentScreen = "register" },
+                        onLoginSuccess = { currentScreen = "main" }
                     )
                     "register" -> RegisterScreen(
                         onNavigateToLogin = { currentScreen = "login" }
                     )
+                    "main" -> MainScreen()
                 }
             }
         }
