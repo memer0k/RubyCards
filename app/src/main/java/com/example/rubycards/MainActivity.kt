@@ -4,13 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.*
+import com.example.rubycards.ui.auth.LoginScreen
+import com.example.rubycards.ui.auth.RegisterScreen
 import com.example.rubycards.ui.theme.RubyCardsTheme
 
 class MainActivity : ComponentActivity() {
@@ -19,29 +15,17 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             RubyCardsTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+                var currentScreen by remember { mutableStateOf("login") }
+
+                when (currentScreen) {
+                    "login" -> LoginScreen(
+                        onNavigateToRegister = { currentScreen = "register" }
+                    )
+                    "register" -> RegisterScreen(
+                        onNavigateToLogin = { currentScreen = "login" }
                     )
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    RubyCardsTheme {
-        Greeting("Android")
     }
 }
