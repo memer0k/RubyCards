@@ -1,11 +1,19 @@
 package com.example.rubycards.ui.auth
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.rubycards.ui.theme.RubyButton
@@ -20,15 +28,24 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    // Состояния для отображения загрузки и сообщений (ошибок/успеха)
     var isLoading by remember { mutableStateOf(false) }
     var resultMessage by remember { mutableStateOf("") }
 
-    // Scope для запуска корутин (фоновых задач)
     val coroutineScope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            // Перехватываем клик по пустому месту и скрываем клавиатуру
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus()
+                })
+            }
+            .imePadding()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -40,7 +57,8 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
             onValueChange = { name = it },
             label = { Text("Имя") },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading // Блокируем ввод во время загрузки
+            enabled = !isLoading,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -49,7 +67,8 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
             onValueChange = { email = it },
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading
+            enabled = !isLoading,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -59,11 +78,14 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
             label = { Text("Пароль") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading
+            enabled = !isLoading,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(
+                onDone = { focusManager.clearFocus() }
+            )
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Блок вывода сообщений (красный для ошибок, зеленый для успеха)
         if (resultMessage.isNotEmpty()) {
             Text(
                 text = resultMessage,
@@ -72,7 +94,6 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Если идет загрузка — показываем индикатор, если нет — кнопку
         if (isLoading) {
             CircularProgressIndicator()
         } else {
@@ -86,8 +107,8 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
 
                     isLoading = true
                     resultMessage = ""
+                    focusManager.clearFocus()
 
-                    // Запускаем сетевой запрос в фоне
                     coroutineScope.launch {
                         try {
                             val request = RegisterRequest(RegisterUser(name, email, password))
@@ -95,14 +116,11 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
 
                             if (response.isSuccessful) {
                                 resultMessage = "Регистрация успешна!"
-                                // При успехе перенаправляем на экран логина
                                 onNavigateToLogin()
                             } else {
-                                // Если сервер вернул ошибку (например, email уже занят)
                                 resultMessage = "Ошибка: сервер вернул код ${response.code()}"
                             }
                         } catch (e: Exception) {
-                            // Если нет интернета или сервер выключен
                             resultMessage = "Ошибка подключения: ${e.localizedMessage}"
                         } finally {
                             isLoading = false
