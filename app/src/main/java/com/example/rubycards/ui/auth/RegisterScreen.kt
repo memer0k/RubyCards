@@ -1,5 +1,6 @@
 package com.example.rubycards.ui.auth
 
+import android.util.Patterns
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.rubycards.ui.theme.RubyButton
@@ -37,7 +39,6 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            // Перехватываем клик по пустому месту и скрываем клавиатуру
             .pointerInput(Unit) {
                 detectTapGestures(onTap = {
                     focusManager.clearFocus()
@@ -58,23 +59,28 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
             label = { Text("Имя") },
             modifier = Modifier.fillMaxWidth(),
             enabled = !isLoading,
+            // Обычная клавиатура, где первая буква заглавная (по умолчанию для имен)
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
         )
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it },
+            onValueChange = { email = it.trim() }, // trim() убирает случайные пробелы по краям
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
             enabled = !isLoading,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+            // Включаем специальную клавиатуру для почты (с символом @)
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            )
         )
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = { password = it.trim() },
             label = { Text("Пароль") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
@@ -100,11 +106,29 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
             RubyButton(
                 text = "Создать аккаунт",
                 onClick = {
+                    // 1. Проверка на пустые поля
                     if (name.isBlank() || email.isBlank() || password.isBlank()) {
                         resultMessage = "Пожалуйста, заполните все поля"
                         return@RubyButton
                     }
 
+                    // 2. Проверка правильности формата Email
+                    if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                        resultMessage = "Пожалуйста, введите корректный Email"
+                        return@RubyButton
+                    }
+
+                    // 3. Проверка надежности пароля
+                    val isPasswordStrong = password.length >= 8 &&
+                            password.any { it.isLetter() } &&
+                            password.any { it.isDigit() }
+
+                    if (!isPasswordStrong) {
+                        resultMessage = "Пароль должен содержать минимум 8 символов, включая буквы и цифры"
+                        return@RubyButton
+                    }
+
+                    // Если все проверки пройдены, отправляем запрос на сервер
                     isLoading = true
                     resultMessage = ""
                     focusManager.clearFocus()
@@ -118,6 +142,7 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
                                 resultMessage = "Регистрация успешна!"
                                 onNavigateToLogin()
                             } else {
+                                // Если сервер вернул ошибку (например, такой email уже есть)
                                 resultMessage = "Ошибка: сервер вернул код ${response.code()}"
                             }
                         } catch (e: Exception) {
