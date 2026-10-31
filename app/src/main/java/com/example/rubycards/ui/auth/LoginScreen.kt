@@ -41,17 +41,14 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var resultMessage by remember { mutableStateOf("") }
 
-    // showSuccess = запрос идёт ИЛИ успех
     var showSuccess by remember { mutableStateOf(false) }
     var isSuccess by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
 
-    // Анимация появления галочки
     val scale = remember { Animatable(0f) }
 
-    // Переход на главный экран через 2 секунды после успеха
     LaunchedEffect(isSuccess) {
         if (isSuccess) {
             scale.animateTo(
@@ -63,7 +60,7 @@ fun LoginScreen(
         }
     }
 
-    // --- ЭКРАН УСПЕХА (показывается сразу при нажатии кнопки "Войти") ---
+    // --- ЭКРАН УСПЕХА ---
     if (showSuccess) {
         Column(
             modifier = Modifier
@@ -73,7 +70,6 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center
         ) {
             if (isSuccess) {
-                // Успех — показываем галочку
                 Surface(
                     shape = CircleShape,
                     color = Color(0xFFE53935),
@@ -109,7 +105,6 @@ fun LoginScreen(
                     textAlign = TextAlign.Center
                 )
             } else {
-                // Запрос ещё идёт — показываем спиннер
                 CircularProgressIndicator(
                     color = Color(0xFFE53935),
                     strokeWidth = 3.dp,
@@ -134,9 +129,7 @@ fun LoginScreen(
         modifier = Modifier
             .fillMaxSize()
             .pointerInput(Unit) {
-                detectTapGestures(onTap = {
-                    focusManager.clearFocus()
-                })
+                detectTapGestures(onTap = { focusManager.clearFocus() })
             }
             .imePadding()
             .verticalScroll(rememberScrollState())
@@ -147,12 +140,24 @@ fun LoginScreen(
         Text(text = "Вход в RubyCards", style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(32.dp))
 
+        // Цвета для полей ввода — чёрный текст
+        val inputColors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = Color.Black,
+            unfocusedTextColor = Color.Black,
+            focusedBorderColor = Color(0xFFE53935),
+            unfocusedBorderColor = Color.Gray,
+            cursorColor = Color(0xFFE53935),
+            focusedLabelColor = Color(0xFFE53935),
+            unfocusedLabelColor = Color.Gray
+        )
+
         OutlinedTextField(
             value = email,
             onValueChange = { email = it.trim() },
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
             enabled = true,
+            colors = inputColors,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next
@@ -162,11 +167,12 @@ fun LoginScreen(
 
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it.trim() },
+            onValueChange = { password = it },
             label = { Text("Пароль") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
             enabled = true,
+            colors = inputColors,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(
                 onDone = { focusManager.clearFocus() }
@@ -187,7 +193,6 @@ fun LoginScreen(
         RubyButton(
             text = "Войти",
             onClick = {
-                // Валидация
                 if (email.isBlank() || password.isBlank()) {
                     resultMessage = "Пожалуйста, заполните все поля"
                     return@RubyButton
@@ -197,7 +202,6 @@ fun LoginScreen(
                     return@RubyButton
                 }
 
-                // СРАЗУ показываем экран успеха со спиннером
                 resultMessage = ""
                 focusManager.clearFocus()
                 showSuccess = true
@@ -209,9 +213,8 @@ fun LoginScreen(
                         val response = RetrofitClient.apiService.login(request)
 
                         if (response.isSuccessful) {
-                            isSuccess = true // Показываем галочку
+                            isSuccess = true
                         } else {
-                            // Ошибка — возвращаемся на экран входа
                             showSuccess = false
                             resultMessage = "Неверный Email или пароль"
                         }
