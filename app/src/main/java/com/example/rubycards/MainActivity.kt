@@ -21,10 +21,11 @@ class MainActivity : ComponentActivity() {
                 when (currentScreen) {
                     "login" -> LoginScreen(
                         onNavigateToRegister = { currentScreen = "register" },
-                        onLoginSuccess = { currentScreen = "main" }
+                        onNavigateToMain = { currentScreen = "main" }
                     )
                     "register" -> RegisterScreen(
-                        onNavigateToLogin = { currentScreen = "login" }
+                        onNavigateToLogin = { currentScreen = "login" },
+                        onNavigateToMain = { currentScreen = "main" }
                     )
                     "main" -> MainScreen()
                 }
