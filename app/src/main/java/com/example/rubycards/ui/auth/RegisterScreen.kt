@@ -29,10 +29,8 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-
     var isLoading by remember { mutableStateOf(false) }
     var resultMessage by remember { mutableStateOf("") }
-
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
 
@@ -59,18 +57,16 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
             label = { Text("Имя") },
             modifier = Modifier.fillMaxWidth(),
             enabled = !isLoading,
-            // Обычная клавиатура, где первая буква заглавная (по умолчанию для имен)
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
         )
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it.trim() }, // trim() убирает случайные пробелы по краям
+            onValueChange = { email = it.trim() },
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
             enabled = !isLoading,
-            // Включаем специальную клавиатуру для почты (с символом @)
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next
@@ -80,7 +76,7 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
 
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it.trim() },
+            onValueChange = { password = it }, // Убрал trim() для пароля, чтобы можно было использовать пробелы в начале/конце, если нужно, но обычно trim не нужен для пароля
             label = { Text("Пароль") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
@@ -119,12 +115,18 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
                     }
 
                     // 3. Проверка надежности пароля
-                    val isPasswordStrong = password.length >= 8 &&
-                            password.any { it.isLetter() } &&
-                            password.any { it.isDigit() }
+                    val hasCyrillic = password.any { it in 'а'..'я' || it in 'А'..'Я' || it == 'ё' || it == 'Ё' }
+                    val hasLatinLetter = password.any { it in 'a'..'z' || it in 'A'..'Z' }
+                    val hasDigit = password.any { it.isDigit() }
+                    val isLongEnough = password.length >= 8
 
-                    if (!isPasswordStrong) {
-                        resultMessage = "Пароль должен содержать минимум 8 символов, включая буквы и цифры"
+                    if (!isLongEnough || !hasLatinLetter || !hasDigit) {
+                        resultMessage = "Пароль должен содержать минимум 8 символов, включая латинские буквы и цифры"
+                        return@RubyButton
+                    }
+
+                    if (hasCyrillic) {
+                        resultMessage = "Пароль не может содержать русские буквы"
                         return@RubyButton
                     }
 
@@ -137,13 +139,13 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
                         try {
                             val request = RegisterRequest(RegisterUser(name, email, password))
                             val response = RetrofitClient.apiService.register(request)
-
                             if (response.isSuccessful) {
                                 resultMessage = "Регистрация успешна!"
                                 onNavigateToLogin()
                             } else {
-                                // Если сервер вернул ошибку (например, такой email уже есть)
-                                resultMessage = "Ошибка: сервер вернул код ${response.code()}"
+                                // Пытаемся получить текст ошибки от сервера, если он есть
+                                val errorBody = response.errorBody()?.string() ?: "Неизвестная ошибка"
+                                resultMessage = "Ошибка: $errorBody"
                             }
                         } catch (e: Exception) {
                             resultMessage = "Ошибка подключения: ${e.localizedMessage}"
@@ -154,9 +156,7 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
                 }
             )
         }
-
         Spacer(modifier = Modifier.height(8.dp))
-
         TextButton(onClick = onNavigateToLogin, enabled = !isLoading) {
             Text("Уже есть аккаунт? Войти")
         }
