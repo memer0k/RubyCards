@@ -1,43 +1,48 @@
 package com.example.rubycards.ui.main
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.rubycards.ui.theme.BackgroundGray
-import com.example.rubycards.ui.theme.RubyButton
-import com.example.rubycards.ui.theme.RubyCard
+import com.example.rubycards.utils.SessionManager
 
 @Composable
-fun MainScreen() {
+fun MainScreen(onLogout: () -> Unit) {
+    val context = LocalContext.current
+    val userName = SessionManager.getUserName(context)
+
     Column(
-        modifier = Modifier.fillMaxSize().background(BackgroundGray).padding(16.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Мои курсы",
+            text = "Добро пожаловать, $userName!",
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
+            textAlign = TextAlign.Center
         )
 
-        LazyColumn {
-            item {
-                RubyCard {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = "Основы Ruby", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = "Уроков: 6-8", style = MaterialTheme.typography.bodyMedium)
-                        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-                        RubyButton(text = "Продолжить обучение", onClick = { /* TODO */ })
-                    }
-                }
-            }
+        Text(
+            text = "Вы успешно вошли в RubyCards",
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(48.dp))
+
+        Button(
+            onClick = onLogout,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Выйти из аккаунта")
         }
     }
 }

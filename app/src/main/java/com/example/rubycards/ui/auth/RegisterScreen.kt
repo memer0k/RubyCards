@@ -1,140 +1,61 @@
 package com.example.rubycards.ui.auth
 
 import android.util.Patterns
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.rubycards.ui.theme.RubyButton
-import com.example.rubycards.network.RetrofitClient
 import com.example.rubycards.network.RegisterRequest
 import com.example.rubycards.network.RegisterUser
-import kotlinx.coroutines.delay
+import com.example.rubycards.network.RetrofitClient
+import com.example.rubycards.ui.theme.RubyButton
+import com.example.rubycards.utils.SessionManager
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 
 @Composable
 fun RegisterScreen(
     onNavigateToLogin: () -> Unit,
-    onNavigateToMain: () -> Unit
+    onRegisterSuccess: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
     var resultMessage by remember { mutableStateOf("") }
-
-    var showSuccess by remember { mutableStateOf(false) }
-    var isSuccess by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
 
-    val scale = remember { Animatable(0f) }
+    // Цвета для полей ввода — чёткий чёрный текст
+    val inputColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = Color.Black,
+        unfocusedTextColor = Color.Black,
+        disabledTextColor = Color.Gray,
+        focusedBorderColor = Color(0xFFE53935),
+        unfocusedBorderColor = Color.Gray,
+        disabledBorderColor = Color.LightGray,
+        cursorColor = Color(0xFFE53935),
+        focusedLabelColor = Color(0xFFE53935),
+        unfocusedLabelColor = Color.DarkGray,
+        focusedPlaceholderColor = Color.LightGray,
+        unfocusedPlaceholderColor = Color.LightGray
+    )
 
-    LaunchedEffect(isSuccess) {
-        if (isSuccess) {
-            scale.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(durationMillis = 500)
-            )
-            delay(2000)
-            onNavigateToMain()
-        }
-    }
-
-    // --- ЭКРАН УСПЕХА ---
-    if (showSuccess) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            if (isSuccess) {
-                Surface(
-                    shape = CircleShape,
-                    color = Color(0xFFE53935),
-                    modifier = Modifier.size(96.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Успех",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(56.dp)
-                            .padding(20.dp)
-                            .scale(scale.value)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                Text(
-                    text = "Регистрация успешна!",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFFE53935),
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = "Добро пожаловать в RubyCards",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(48.dp))
-
-                CircularProgressIndicator(
-                    color = Color(0xFFE53935),
-                    strokeWidth = 3.dp
-                )
-            } else {
-                CircularProgressIndicator(
-                    color = Color(0xFFE53935),
-                    strokeWidth = 3.dp,
-                    modifier = Modifier.size(64.dp)
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Text(
-                    text = "Создаём аккаунт...",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-        return
-    }
-
-    // --- ОБЫЧНЫЙ ЭКРАН РЕГИСТРАЦИИ ---
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -150,23 +71,12 @@ fun RegisterScreen(
         Text(text = "Регистрация", style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Цвета для полей ввода — чёрный текст
-        val inputColors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = Color.Black,
-            unfocusedTextColor = Color.Black,
-            focusedBorderColor = Color(0xFFE53935),
-            unfocusedBorderColor = Color.Gray,
-            cursorColor = Color(0xFFE53935),
-            focusedLabelColor = Color(0xFFE53935),
-            unfocusedLabelColor = Color.Gray
-        )
-
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
             label = { Text("Имя") },
             modifier = Modifier.fillMaxWidth(),
-            enabled = true,
+            enabled = !isLoading,
             colors = inputColors,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
         )
@@ -177,7 +87,7 @@ fun RegisterScreen(
             onValueChange = { email = it.trim() },
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
-            enabled = true,
+            enabled = !isLoading,
             colors = inputColors,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email,
@@ -192,7 +102,7 @@ fun RegisterScreen(
             label = { Text("Пароль") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
-            enabled = true,
+            enabled = !isLoading,
             colors = inputColors,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
@@ -202,80 +112,112 @@ fun RegisterScreen(
         if (resultMessage.isNotEmpty()) {
             Text(
                 text = resultMessage,
-                color = MaterialTheme.colorScheme.error,
-                textAlign = TextAlign.Center,
+                color = if (resultMessage.contains("успешна")) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error,
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        RubyButton(
-            text = "Создать аккаунт",
-            onClick = {
-                if (name.isBlank() || email.isBlank() || password.isBlank()) {
-                    resultMessage = "Пожалуйста, заполните все поля"
-                    return@RubyButton
-                }
-                if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                    resultMessage = "Пожалуйста, введите корректный Email"
-                    return@RubyButton
-                }
-                val hasCyrillic = password.any { it in 'а'..'я' || it in 'А'..'Я' || it == 'ё' || it == 'Ё' }
-                val hasLatinLetter = password.any { it in 'a'..'z' || it in 'A'..'Z' }
-                val hasDigit = password.any { it.isDigit() }
+        if (isLoading) {
+            CircularProgressIndicator()
+        } else {
+            RubyButton(
+                text = "Создать аккаунт",
+                onClick = {
+                    if (name.isBlank() || email.isBlank() || password.isBlank()) {
+                        resultMessage = "Пожалуйста, заполните все поля"
+                        return@RubyButton
+                    }
+                    if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                        resultMessage = "Пожалуйста, введите корректный Email"
+                        return@RubyButton
+                    }
 
-                if (password.length < 8 || !hasLatinLetter || !hasDigit) {
-                    resultMessage = "Пароль: мин. 8 символов, латиница и цифры"
-                    return@RubyButton
-                }
-                if (hasCyrillic) {
-                    resultMessage = "Пароль не может содержать русские буквы"
-                    return@RubyButton
-                }
+                    val hasCyrillic = password.any { it in 'а'..'я' || it in 'А'..'Я' || it == 'ё' || it == 'Ё' }
+                    val hasLatinLetter = password.any { it in 'a'..'z' || it in 'A'..'Z' }
+                    val hasDigit = password.any { it.isDigit() }
 
-                resultMessage = ""
-                focusManager.clearFocus()
-                showSuccess = true
-                isSuccess = false
+                    if (password.length < 8 || !hasLatinLetter || !hasDigit) {
+                        resultMessage = "Пароль: мин. 8 символов, латиница и цифры"
+                        return@RubyButton
+                    }
+                    if (hasCyrillic) {
+                        resultMessage = "Пароль не может содержать русские буквы"
+                        return@RubyButton
+                    }
 
-                coroutineScope.launch {
-                    try {
-                        val request = RegisterRequest(RegisterUser(name, email, password))
-                        val response = RetrofitClient.apiService.register(request)
+                    isLoading = true
+                    resultMessage = ""
+                    focusManager.clearFocus()
 
-                        if (response.isSuccessful) {
-                            isSuccess = true
-                        } else {
-                            showSuccess = false
-                            val errorBody = response.errorBody()?.string()
-                            var errorMessage = "Ошибка регистрации"
+                    coroutineScope.launch {
+                        try {
+                            val request = RegisterRequest(RegisterUser(name, email, password))
+                            val response = RetrofitClient.apiService.register(request)
 
-                            if (errorBody != null) {
+                            if (response.isSuccessful) {
+                                val body = response.body()
+                                if (body != null && body.authToken != null && body.user != null) {
+                                    SessionManager.saveSession(
+                                        context = context,
+                                        token = body.authToken,
+                                        userName = body.user.name,
+                                        userEmail = body.user.email
+                                    )
+                                    onRegisterSuccess()
+                                } else {
+                                    resultMessage = "Ошибка: неожиданный ответ сервера"
+                                }
+                            } else {
+                                val errorBody = response.errorBody()?.string()
+                                var errorMessage = "Ошибка регистрации"
                                 try {
-                                    val jsonObject = JSONObject(errorBody)
-                                    if (jsonObject.has("errors")) {
-                                        val errorsArray = jsonObject.getJSONArray("errors")
+                                    val jsonObject = org.json.JSONObject(errorBody)
+                                    if (jsonObject.has("details")) {
+                                        val details = jsonObject.getJSONObject("details")
                                         val messages = mutableListOf<String>()
-                                        for (i in 0 until errorsArray.length()) {
-                                            messages.add(errorsArray.getString(i))
+
+                                        if (details.has("email")) {
+                                            val emailErrors = details.getJSONArray("email")
+                                            for (i in 0 until emailErrors.length()) {
+                                                val error = emailErrors.getString(i)
+                                                messages.add(when {
+                                                    error.contains("уже") || error.contains("taken") -> "Этот email уже зарегистрирован"
+                                                    error.contains("неверный") || error.contains("invalid") -> "Неверный формат email"
+                                                    else -> error
+                                                })
+                                            }
                                         }
-                                        errorMessage = messages.joinToString("\n")
+
+                                        if (details.has("password")) {
+                                            val passwordErrors = details.getJSONArray("password")
+                                            for (i in 0 until passwordErrors.length()) {
+                                                messages.add(passwordErrors.getString(i))
+                                            }
+                                        }
+
+                                        if (messages.isNotEmpty()) {
+                                            errorMessage = messages.joinToString("\n")
+                                        }
+                                    } else if (jsonObject.has("error")) {
+                                        errorMessage = jsonObject.getString("error")
                                     }
                                 } catch (_: Exception) {
-                                    errorMessage = "Ошибка: ${response.code()}"
+                                    errorMessage = "Ошибка ${response.code()}"
                                 }
+                                resultMessage = errorMessage
                             }
-                            resultMessage = errorMessage
+                        } catch (e: Exception) {
+                            resultMessage = "Ошибка подключения: ${e.localizedMessage}"
+                        } finally {
+                            isLoading = false
                         }
-                    } catch (e: Exception) {
-                        showSuccess = false
-                        resultMessage = "Ошибка подключения: ${e.localizedMessage}"
                     }
                 }
-            }
-        )
+            )
+        }
         Spacer(modifier = Modifier.height(8.dp))
-        TextButton(onClick = onNavigateToLogin) {
+        TextButton(onClick = onNavigateToLogin, enabled = !isLoading) {
             Text("Уже есть аккаунт? Войти")
         }
     }
