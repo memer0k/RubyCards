@@ -7,7 +7,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
 import com.example.rubycards.ui.auth.LoginScreen
 import com.example.rubycards.ui.auth.RegisterScreen
+import com.example.rubycards.ui.blocks.BlockDetailScreen
 import com.example.rubycards.ui.main.MainScreen
+import com.example.rubycards.ui.profile.ProfileScreen
+import com.example.rubycards.ui.settings.SettingsScreen
 import com.example.rubycards.ui.theme.RubyCardsTheme
 import com.example.rubycards.utils.SessionManager
 
@@ -17,12 +20,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             RubyCardsTheme {
-                // Проверяем, есть ли сохранённая сессия
                 val isLoggedIn = SessionManager.isLoggedIn(this)
 
                 var currentScreen by remember {
                     mutableStateOf(if (isLoggedIn) "main" else "login")
                 }
+                // Переменная для хранения названия выбранного блока
+                var selectedBlockName by remember { mutableStateOf("") }
 
                 when (currentScreen) {
                     "login" -> LoginScreen(
@@ -37,7 +41,23 @@ class MainActivity : ComponentActivity() {
                         onLogout = {
                             SessionManager.logout(this)
                             currentScreen = "login"
+                        },
+                        onProfileClick = { currentScreen = "profile" },
+                        onSettingsClick = { currentScreen = "settings" },
+                        onBlockClick = { blockName ->
+                            selectedBlockName = blockName
+                            currentScreen = "block_detail"
                         }
+                    )
+                    "profile" -> ProfileScreen(
+                        onBack = { currentScreen = "main" }
+                    )
+                    "settings" -> SettingsScreen(
+                        onBack = { currentScreen = "main" }
+                    )
+                    "block_detail" -> BlockDetailScreen(
+                        blockName = selectedBlockName,
+                        onBack = { currentScreen = "main" }
                     )
                 }
             }

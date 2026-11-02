@@ -20,7 +20,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.rubycards.utils.SessionManager
 
-// Модель блока
 data class BlockItem(
     val id: Int,
     val title: String,
@@ -28,11 +27,15 @@ data class BlockItem(
 )
 
 @Composable
-fun MainScreen(onLogout: () -> Unit) {
+fun MainScreen(
+    onLogout: () -> Unit,
+    onProfileClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onBlockClick: (String) -> Unit // <-- Добавили передачу названия блока
+) {
     val context = LocalContext.current
     val userName = SessionManager.getUserName(context)
 
-    // Список блоков
     val blocks = listOf(
         BlockItem(1, "Введение в руби", "Основы языка Ruby и его особенности"),
         BlockItem(2, "Основы Ruby", "Переменные, методы, классы и объекты"),
@@ -56,7 +59,7 @@ fun MainScreen(onLogout: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Иконка профиля (слева)
-            IconButton(onClick = { /* Пока пусто, добавим навигацию позже */ }) {
+            IconButton(onClick = onProfileClick) {
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = "Профиль",
@@ -66,7 +69,7 @@ fun MainScreen(onLogout: () -> Unit) {
             }
 
             // Иконка настроек (справа)
-            IconButton(onClick = { /* Пока пусто, добавим навигацию позже */ }) {
+            IconButton(onClick = onSettingsClick) {
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = "Настройки",
@@ -110,9 +113,7 @@ fun MainScreen(onLogout: () -> Unit) {
             blocks.forEach { block ->
                 BlockCard(
                     block = block,
-                    onClick = {
-                        // Пока пусто, добавим навигацию в Части 3
-                    }
+                    onClick = { onBlockClick(block.title) } // <-- Передаём название
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -134,7 +135,6 @@ fun MainScreen(onLogout: () -> Unit) {
     }
 }
 
-// Компонент карточки блока
 @Composable
 fun BlockCard(block: BlockItem, onClick: () -> Unit) {
     Card(
