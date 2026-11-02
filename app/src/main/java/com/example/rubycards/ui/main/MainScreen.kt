@@ -2,23 +2,22 @@ package com.example.rubycards.ui.main
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.rubycards.utils.SessionManager
 
 // Модель блока
@@ -47,46 +46,86 @@ fun MainScreen(onLogout: () -> Unit) {
             .fillMaxSize()
             .background(Color.White)
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Header с приветствием
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Привет, $userName!",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFFE53935),
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Выбери блок для изучения",
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color.Gray,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(32.dp))
+        // --- HEADER С ИКОНКАМИ ---
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Иконка профиля (слева)
+            IconButton(onClick = { /* Пока пусто, добавим навигацию позже */ }) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Профиль",
+                    tint = Color(0xFFE53935),
+                    modifier = Modifier.size(32.dp)
+                )
+            }
 
-        // Блоки
-        blocks.forEach { block ->
-            BlockCard(
-                block = block,
-                onClick = {
-                    // Пока ничего не делаем — добавим навигацию в следующей части
-                }
+            // Иконка настроек (справа)
+            IconButton(onClick = { /* Пока пусто, добавим навигацию позже */ }) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Настройки",
+                    tint = Color(0xFFE53935),
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+        }
+
+        // --- ПРИВЕТСТВИЕ ---
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Привет, $userName!",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFE53935),
+                textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Выбери блок для изучения",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.Gray,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // --- БЛОКИ ---
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        ) {
+            blocks.forEach { block ->
+                BlockCard(
+                    block = block,
+                    onClick = {
+                        // Пока пусто, добавим навигацию в Части 3
+                    }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Кнопка выхода
+        // --- КНОПКА ВЫХОДА ---
         Button(
             onClick = onLogout,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
         ) {
             Text("Выйти из аккаунта", color = Color.White)
