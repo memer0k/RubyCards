@@ -1,8 +1,10 @@
 package com.example.rubycards.ui.blocks
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -13,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -26,6 +29,28 @@ fun BlockDetailScreen(
 ) {
     var isFavorite by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableIntStateOf(0) } // 0 = Теория, 1 = Практика
+    val context = LocalContext.current
+
+    // Создаём ScrollState для управления скроллом
+    val scrollState = rememberScrollState()
+
+    // Ключ для сохранения позиции (уникальный для каждого блока)
+    val scrollKey = "scroll_position_$blockName"
+
+    // Восстанавливаем позицию при первом запуске
+    LaunchedEffect(blockName) {
+        val savedPosition = context.getSharedPreferences("ruby_cards_prefs", Context.MODE_PRIVATE)
+            .getInt(scrollKey, 0)
+        scrollState.scrollTo(savedPosition)
+    }
+
+    // Сохраняем позицию при изменении
+    LaunchedEffect(scrollState.value) {
+        context.getSharedPreferences("ruby_cards_prefs", Context.MODE_PRIVATE)
+            .edit()
+            .putInt(scrollKey, scrollState.value)
+            .apply()
+    }
 
     val tabs = listOf("Теория", "Практика")
 
@@ -117,7 +142,7 @@ fun BlockDetailScreen(
 
         // --- КОНТЕНТ ---
         when (selectedTab) {
-            0 -> IntroToRubyContent()  // <-- Подключаем новый файл
+            0 -> IntroToRubyContent(scrollState)  // Передаём scrollState
             1 -> PracticeContent()
         }
     }
